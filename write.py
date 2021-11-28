@@ -17,8 +17,9 @@ write = Client(
 
 HELP_STRING = """
 ● Still Wonder How I Work ? 
-● Use /write to 
-● Use /Donate to Donate
+● Use /write to Write on a paper
+● Use /img2txt to Convert image to text
+● Use /webshot to Create Webshot text
 """
 ABOUT_STRING = """
 ● **BOT:** `Writing Tools Bot` 
