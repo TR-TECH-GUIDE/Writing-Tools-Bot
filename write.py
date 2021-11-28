@@ -3,8 +3,10 @@ from pyrogram import Client, filters
 from pyrogram.types import User, Message
 import os
 import requests
+import requests as r
 from htmlwebshot import WebShot
 from PIL import Image, ImageDraw, ImageFont
+from telegraph import upload_file as uf
 
 write = Client(
     "Writing-Tools",
@@ -13,7 +15,24 @@ write = Client(
     api_hash=os.environ["API_HASH"],
 )
 
-@write(pattern="write ?(.*)")
+HELP_STRING = """
+● Still Wonder How I Work ? 
+● Use /write to 
+● Use /Donate to Donate
+"""
+ABOUT_STRING = """
+● **BOT:** `Writing Tools Bot` 
+● **CRETOR :** [Tharuk Renuja](https://t.me/TharukRenuja) 
+● **SERVER :** `Azure` 
+● **LIBRARY :** `Pyrogram` 
+● **LANGUAGE :** `Python 3.9` 
+● **Updates :** [SLBotsOfficial](https://t.me/SLBotsOfficial) 
+"""
+START_STRING = """ Hi {}, I'm Writing Tools Bot. 
+ I Can Write Your Text on a Paper."""
+
+
+@write(pattern="write ?(/*)")
 async def writer(e):
     if e.reply_to:
         reply = await e.get_reply_message()
@@ -37,38 +56,109 @@ async def writer(e):
     await e.reply(file=file)
     os.remove(file)
     await k.delete()
+        
+@write.on_message(filters.command(["start"]) & filters.private)
+async def start_private(bot, update):
+    text = START_STRING.format(update.from_user.mention)
+    reply_markup = START_BUTTON
+    await update.reply_text(
+        text=text,
+        disable_web_page_preview=True,
+        reply_markup=reply_markup,
+        quote=True
+    )
     
-    
-@wite.on_message(filters.text)
-async def text(bot, message):
-    text = str(message.text)
-    chat_id = int(message.chat.id)
-    file_name = f"{message.chat.id}.jpg"
-    length = len(text)
-    if length < 500:
-        txt = await message.reply_text("Converting to handwriting...")
-        rgb = [0, 0, 0] # Edit RGB values here to change the Ink color
-        try:
-            # Can directly use pywhatkit module for this
-            data = requests.get(
-                "https://pywhatkit.herokuapp.com/handwriting?text=%s&rgb=%s,%s,%s"
-                % (text, rgb[0], rgb[1], rgb[2])
-            ).content
-        except Exception as error:
-            await message.reply_text(f"{error}")
-            return
-        with open(file_name, "wb") as file:
-            file.write(data)
-            file.close()
-        await txt.edit("Uploading...")
-        await bot.send_photo(
-            chat_id=chat_id,
-            photo=file_name,
-            caption="Written by @SLBotsOfficial"
-        )
-        await txt.delete()
-        os.remove(file_name)
+@write(pattern="webshot ?(/*)")
+async def f2i(e):
+    txt = e.pattern_match.group(1)
+    if txt:
+        html = e.text.split(maxsplit=1)[1]
+    elif e.reply_to:
+        r = await e.get_reply_message()
+        if r.media:
+            html = await e.client.download_media(r.media)
+        elif r.text:
+            html = r.text
     else:
-        await message.reply_text("Please don't do It")
+        return await eod(e, "`Either reply to any file or give any text`")
+    html = html.replace("\n", "<br>")
+    shot = WebShot(quality=85)
+    css = "body {background: white;} p {color: red;}"
+    pic = await shot.create_pic_async(html=html, css=css)
+    try:
+        await e.reply(file=pic)
+    except BaseException:
+        await e.reply(file=pic, force_document=True)
+    os.remove(pic)
+    if os.path.exists(html):
+        os.remove(html)
+        
+@write(pattern="img2txt ?(/*)")
+async def ocrify(ult):
+    if not ult.is_reply:
+        return await eor(ult, "`Reply to Photo...`")
+    msg = await eor(ult, "`Processing..`")
+    OAPI = os.environ("OCR_API")
+    if not OAPI:
+        return await msg.edit(TE)
+    pat = ult.pattern_match.group(1)
+    repm = await ult.get_reply_message()
+    if not (repm.media and repm.media.photo):
+        return await msg.edit("`Not a Photo..`")
+    dl = await repm.download_media()
+    if pat:
+        atr = f"&language={pat}&"
+    else:
+        atr = "&"
+    tt = uf(dl)
+    li = "https://telegra.ph" + tt[0]
+    gr = r.get(
+        f"https://api.ocr.space/parse/imageurl?apikey={OAPI}{atr}url={li}"
+    ).json()
+    trt = gr["ParsedResults"][0]["ParsedText"]
+    await msg.edit(f"**🎉 IMG2TXT PORTAL\n\nRESULTS ~ ** `{trt}`")
+    
+@write.on_message(filters.command(["help"]) & filters.private)
+async def start_private(bot, update):
+    text = HELP_STRING.format(update.from_user.mention)
+    reply_markup = START_BUTTON
+    await update.reply_text(
+        text=text,
+        disable_web_page_preview=True,
+        reply_markup=reply_markup,
+        quote=True
+    )
+    
+@write.on_message(filters.command(["about"]) & filters.private)
+async def start_private(bot, update):
+    text = ABOUT_STRING.format(update.from_user.mention)
+    reply_markup = START_BUTTON
+    await update.reply_text(
+        text=text,
+        disable_web_page_preview=True,
+        reply_markup=reply_markup,
+        quote=True
+    )    
+    
+@write.on_callback_query()
+async def cb_data(bot, update):  
+    if update.data == "cbhelp":
+        await update.message.edit_text(
+            text=HELP_STRING,
+            reply_markup=CLOSE_BUTTON,
+            disable_web_page_preview=True
+        )
+    elif update.data == "cbabout":
+        await update.message.edit_text(
+            text=ABOUT_STRING,
+            reply_markup=CLOSE_BUTTON,
+            disable_web_page_preview=True
+        )
+    else:
+        await update.message.edit_text(
+            text=START_STRING.format(update.from_user.mention),
+            disable_web_page_preview=True,
+            reply_markup=START_BUTTON
+        )
         
 @write.run()
