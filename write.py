@@ -43,9 +43,9 @@ async def writer(e):
     else:
         return await eod(e, get_string("writer_1"))
     k = await eor(e, get_string("com_1"))
-    img = Image.open("resources/extras/template.jpg")
+    img = Image.open("https://telegra.ph/file/6231b752af485850d80fb.jpg")
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("resources/fonts/assfont.ttf", 30)
+    font = ImageFont.truetype("fonts/assfont.ttf", 30)
     x, y = 150, 140
     lines = text_set(text)
     line_height = font.getsize("hg")[1]
