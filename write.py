@@ -36,7 +36,7 @@ START_BUTTON = InlineKeyboardMarkup(
                     [
                         [
                             InlineKeyboardButton(text="Help❔",callback_data="cbhelp".format(chat_id),InlineKeyboardButton(text="About🤖",callback_data="cbabout".format(chat_id)),
-                        ],
+                        ]
                         [
                             InlineKeyboardButton(text="Channel 📢",url="https://t.me/SLBotsofficial"),InlineKeyboardButton(text="Developer👦",url="https://t.me/TharukRenuja")
                         ]
